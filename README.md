@@ -16,6 +16,7 @@ Read more about how [custom images](https://maas.io/docs/how-to-customise-images
 | [AlmaLinux 8](alma8/README.md)       | Beta               | x86_64            | >= 3.5           |
 | [AlmaLinux 9](alma9/README.md)       | Beta               | x86_64            | >= 3.5           |
 | [AzureLinux 2.0](azurelinux/README.md)    | Beta               | x86_64            | >= 3.3           |
+| [BlueField](bluefield/README.md)       | Alpha              | aarch64  | >= 3.7           |
 | [CentOS 6](centos6/README.md)          | EOL                | x86_64            | >= 1.6           |
 | [CentOS 7](centos7/README.md)          | Stable             | x86_64            | >= 2.3           |
 | [CentOS 8](centos8/README.md)          | EOL                | x86_64            | >= 2.7           |
