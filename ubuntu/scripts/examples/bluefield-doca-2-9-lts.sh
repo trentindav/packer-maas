@@ -85,6 +85,10 @@ network:
             addresses:
             - 192.168.100.2/30
             mtu: 1500
+        eth1:
+            mtu: 9000
+        eth2:
+            mtu: 9000
         pf0hpf:
             renderer: networkd
             dhcp4: false
