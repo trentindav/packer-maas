@@ -1,0 +1,10 @@
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+
+Package: openvswitch-switch
+Version: 9999
+Maintainer: Your Name <your@email.com>
+Architecture: all
+Description: Dummy package to trick MAAS
+ This is a fake package to trick MAAS dependency on openvswitch-switch.

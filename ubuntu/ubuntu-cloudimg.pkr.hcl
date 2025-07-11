@@ -117,6 +117,17 @@ build {
     scripts          = ["${path.root}/scripts/cloudimg/cleanup.sh"]
   }
 
+  provisioner "file" {
+    destination = "/tmp/"
+    sources     = ["${path.root}/ovs-dummy/openvswitch-switch_9999_all.deb"]
+  }
+
+  provisioner "shell" {
+    environment_vars  = concat(local.proxy_env, ["DEBIAN_FRONTEND=noninteractive"])
+    expect_disconnect = true
+    scripts           = ["${path.root}/scripts/examples/ovs-dummy.sh"]
+  }
+
   post-processor "shell-local" {
     inline = [
       "IMG_FMT=qcow2",
