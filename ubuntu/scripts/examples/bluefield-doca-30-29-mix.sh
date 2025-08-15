@@ -1,46 +1,64 @@
 #!/bin/bash
+set -x
 export DEBIAN_FRONTEND=noninteractive
 
 GPG_KEY="GPG-KEY-Mellanox.pub"
 DPU_ARCH="aarch64"
-DOCA_VERSION="2.9.2"
+DOCA_29_VERSION="2.9.3"
+DOCA_30_VERSION="3.0.0"
 TMP_KEYRING="/tmp/mellanox-keyring.gpg"
 MELLANOX_GPG="/etc/apt/keyrings/mellanox.gpg"
-BF_KERNEL_VERSION="5.15.0.1060.62"
-BF_KERNEL_VERSION_DASH="5.15.0-1060.62"
+BF_KERNEL_VERSION="5.15.0.1065.67"
+
+
+export  BFVER=25.04.OFED.25.04.0.6.1.1-1.bf.kver.5.15.0-1065-bluefield
+export MFTVER=4.32.0-120.kver.5.15.0-1065-bluefield
+export    VER=25.04.OFED.25.04.0.6.1.1-1.kver.5.15.0-1065-bluefield
+export UBKVER=5.15.0-1065
 
 mkdir -p /etc/apt/keyrings
-wget https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu22.04/$DPU_ARCH/$GPG_KEY
+wget https://linux.mellanox.com/public/repo/doca/$DOCA_30_VERSION/ubuntu22.04/$DPU_ARCH/$GPG_KEY
 gpg --no-default-keyring --keyring $TMP_KEYRING --import ./$GPG_KEY
 gpg --no-default-keyring --keyring $TMP_KEYRING --export --output $MELLANOX_GPG
 rm $TMP_KEYRING
-echo "deb [signed-by=$MELLANOX_GPG] https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu22.04/$DPU_ARCH ./" | tee /etc/apt/sources.list.d/doca.list
+echo "deb [signed-by=$MELLANOX_GPG] https://linux.mellanox.com/public/repo/doca/$DOCA_30_VERSION/ubuntu22.04/$DPU_ARCH ./" | tee /etc/apt/sources.list.d/doca.list
 
 apt-get update
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -f \
     linux-bluefield=$BF_KERNEL_VERSION \
-    linux-bluefield-cloud-tools-common=$BF_KERNEL_VERSION_DASH \
-    linux-bluefield-headers-5.15.0-1060=$BF_KERNEL_VERSION_DASH \
-    linux-bluefield-tools-5.15.0-1060=$BF_KERNEL_VERSION_DASH \
-    linux-buildinfo-5.15.0-1060-bluefield=$BF_KERNEL_VERSION_DASH \
-    linux-headers-5.15.0-1060-bluefield=$BF_KERNEL_VERSION_DASH \
-    linux-headers-bluefield=$BF_KERNEL_VERSION \
-    linux-image-5.15.0-1060-bluefield=$BF_KERNEL_VERSION_DASH \
-    linux-image-bluefield=$BF_KERNEL_VERSION \
-    linux-modules-5.15.0-1060-bluefield=$BF_KERNEL_VERSION_DASH \
-    linux-modules-extra-5.15.0-1060-bluefield=$BF_KERNEL_VERSION_DASH \
-    linux-tools-5.15.0-1060-bluefield=$BF_KERNEL_VERSION_DASH \
-    linux-tools-bluefield=$BF_KERNEL_VERSION \
-    linux-libc-dev:arm64 \
-    linux-tools-common \
-    mlnx-ofed-kernel-modules \
-    doca-runtime \
-    doca-devel \
+    linux-bluefield-headers-$UBKVER \
+    linux-bluefield-tools-$UBKVER \
+    linux-buildinfo-$UBKVER-bluefield \
+    linux-headers-$UBKVER-bluefield \
+    linux-image-$UBKVER-bluefield \
+    linux-modules-$UBKVER-bluefield \
+    linux-modules-extra-$UBKVER-bluefield \
+    linux-tools-$UBKVER-bluefield \
+    mlnx-ofed-kernel-modules=$BFVER \
+    mlnx-ofed-kernel-utils=$BFVER \
+    kernel-mft-modules=$MFTVER \
+    fwctl-modules=$VER \
+    iser-modules=$VER \
+    isert-modules=$VER \
+    mlnx-nfsrdma-modules=$VER \
+    mlnx-nvme-modules=$VER \
+    srp-modules=$VER
+
+rm /etc/apt/sources.list.d/doca.list
+wget https://linux.mellanox.com/public/repo/doca/$DOCA_29_VERSION/ubuntu22.04/$DPU_ARCH/$GPG_KEY
+gpg --no-default-keyring --keyring $TMP_KEYRING --import ./$GPG_KEY
+gpg --no-default-keyring --keyring $TMP_KEYRING --export --output $MELLANOX_GPG
+rm $TMP_KEYRING
+echo "deb [signed-by=$MELLANOX_GPG] https://linux.mellanox.com/public/repo/doca/$DOCA_29_VERSION/ubuntu22.04/$DPU_ARCH ./" | tee /etc/apt/sources.list.d/doca.list
+
+apt-get update
+apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -f \
+    doca-runtime-user \
     mlnx-fw-updater-signed
 
 apt-mark hold linux-tools-bluefield linux-image-bluefield linux-bluefield \
-        linux-headers-bluefield linux-image-bluefield linux-libc-dev \
-        linux-tools-common mlnx-ofed-kernel-modules doca-runtime doca-devel
+        linux-headers-bluefield linux-image-bluefield \
+        linux-tools-common mlnx-ofed-kernel-modules doca-runtime-user
 
 sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
 
