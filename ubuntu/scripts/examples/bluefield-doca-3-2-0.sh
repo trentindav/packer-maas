@@ -1,54 +1,68 @@
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
+set -x
 
 GPG_KEY="GPG-KEY-Mellanox.pub"
-DPU_ARCH="aarch64"
+DPU_ARCH="arm64"
 DOCA_VERSION="3.2.0"
 TMP_KEYRING="/tmp/mellanox-keyring.gpg"
 MELLANOX_GPG="/etc/apt/keyrings/mellanox.gpg"
 KERNEL="6.8.0"
-KSUBVER="1012"
-KVER_DASH="$KERNEL-$KSUBVER"
-KVER_DOT="$KERNEL.$KSUBVER"
-KREVISION="16"
-BF_KERNEL_VERSION="$KVER_DOT.13"
+KREVISION="1012"
+KBUILD="16"
+KVER_DASH="$KERNEL-$KREVISION"
 
 mkdir -p /etc/apt/keyrings
-wget https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu24.04/$DPU_ARCH/$GPG_KEY
+wget https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu24.04-64k/$DPU_ARCH/$GPG_KEY
 gpg --no-default-keyring --keyring $TMP_KEYRING --import ./$GPG_KEY
 gpg --no-default-keyring --keyring $TMP_KEYRING --export --output $MELLANOX_GPG
 rm $TMP_KEYRING
-echo "deb [signed-by=$MELLANOX_GPG] https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu24.04/$DPU_ARCH ./" | tee /etc/apt/sources.list.d/doca.list
+echo "deb [signed-by=$MELLANOX_GPG] https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu24.04-64k/$DPU_ARCH ./" | tee /etc/apt/sources.list.d/doca.list
 
 apt-get update
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -f \
-    linux-bluefield=$BF_KERNEL_VERSION \
-    linux-bluefield-headers-$KVER_DASH=$KVER_DASH.$KREVISION \
-    linux-bluefield-tools-$KVER_DASH=$KVER_DASH.$KREVISION \
-    linux-buildinfo-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
-    linux-headers-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
-    linux-headers-bluefield=$BF_KERNEL_VERSION \
-    linux-image-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
-    linux-image-bluefield=$BF_KERNEL_VERSION \
-    linux-modules-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
-    linux-modules-extra-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
-    linux-tools-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
-    linux-tools-bluefield=$BF_KERNEL_VERSION \
-    linux-libc-dev:arm64 \
-    linux-tools-common \
+    linux-bluefield-headers-$KVER_DASH=$KVER_DASH.$KBUILD \
+    linux-bluefield-tools-$KVER_DASH=$KVER_DASH.$KBUILD \
+    linux-buildinfo-$KVER_DASH-bluefield-64k=$KVER_DASH.$KBUILD \
+    linux-headers-$KVER_DASH-bluefield-64k=$KVER_DASH.$KBUILD \
+    linux-image-$KVER_DASH-bluefield-64k=$KVER_DASH.$KBUILD \
+    linux-modules-$KVER_DASH-bluefield-64k=$KVER_DASH.$KBUILD \
+    linux-modules-extra-$KVER_DASH-bluefield-64k=$KVER_DASH.$KBUILD \
+    linux-tools-$KVER_DASH-bluefield-64k=$KVER_DASH.$KBUILD \
+    bridge-utils \
+    conntrack \
+    dmidecode \
+    ebtables \
+    edac-utils \
+    iptables-persistent \
+    iputils-arping \
+    iputils-ping \
+    iputils-tracepath \
+    irqbalance \
+    jq \
+    curl \
+    kexec-tools \
+    lldpd \
+    lm-sensors \
+    mstflint \
+    net-tools \
+    nftables \
+    tcpdump \
+    vim \
     mlnx-ofed-kernel-modules \
     doca-runtime \
     doca-devel \
+    libxlio \
+    libxlio-dev \
+    libxlio-utils \
+    strongswan \
     mlnx-fw-updater-signed
 
-apt-mark hold linux-tools-bluefield linux-image-bluefield linux-bluefield \
-        linux-headers-bluefield linux-image-bluefield linux-libc-dev \
-        linux-tools-common mlnx-ofed-kernel-modules doca-runtime doca-devel
+rm /etc/apt/sources.list.d/doca.list
 
 sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
 
-# Remove conflicting and unused configurations from bf-release
-sed -i \
+# Remove conflicting and unused configurations from bf-release                                                                 sed -i \
     -e 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="text debug console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000 fixrtc net.ifnames=0 biosdevname=0 iommu.passthrough=1 earlyprintk=efi,keep"/' \
     -e 's/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=""/' \
     /etc/default/grub
@@ -61,7 +75,6 @@ sed -i -E "s/(_unsigned|_prod|_dev)/_packer_maas/;" /etc/mlnx-release
 # OVS bridges creation will be managed by MAAS and cloud-init
 sed -i 's/OVS_DOCA="no"/OVS_DOCA="yes"/' /etc/mellanox/mlnx-ovs.conf
 sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
-ovs-vsctl --no-wait set Open_vSwitch . other_config:hw-offload=true
 
 systemctl enable NetworkManager.service || true
 systemctl enable NetworkManager-wait-online.service || true
@@ -86,34 +99,16 @@ network:
             addresses:
             - 192.168.100.2/30
             mtu: 1500
-        pf0hpf:
-            renderer: networkd
+        pf0hpf:                                                                                                                            renderer: networkd
             dhcp4: false
             mtu: 9000
         pf1hpf:
             renderer: networkd
             dhcp4: false
             mtu: 9000
-    bridges:
-        ovsbr1:
-            mtu: 9000
-            interfaces:
-            - eth1
-            - pf0hpf
-            parameters:
-                forward-delay: "15"
-                stp: false
-            openvswitch: {}
-        ovsbr2:
-            mtu: 9000
-            interfaces:
-            - eth2
-            - pf1hpf
-            parameters:
-                forward-delay: "15"
-                stp: false
-            openvswitch: {}
 EOF
 
 mkdir -p /curtin
-echo -n "linux-bluefield=$BF_KERNEL_VERSION" > /curtin/CUSTOM_KERNEL
+
+apt list --installed | grep linux
+echo -n "linux-image-$KVER_DASH-bluefield-64k" > /curtin/CUSTOM_KERNEL
