@@ -45,7 +45,10 @@ apt-mark hold linux-tools-bluefield linux-image-bluefield linux-bluefield \
         linux-headers-bluefield linux-image-bluefield linux-libc-dev \
         linux-tools-common mlnx-ofed-kernel-modules doca-runtime doca-devel
 
+rm /etc/apt/sources.list.d/doca.list
+
 sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
+
 
 # Remove conflicting and unused configurations from bf-release
 sed -i \
@@ -61,7 +64,6 @@ sed -i -E "s/(_unsigned|_prod|_dev)/_packer_maas/;" /etc/mlnx-release
 # OVS bridges creation will be managed by MAAS and cloud-init
 sed -i 's/OVS_DOCA="no"/OVS_DOCA="yes"/' /etc/mellanox/mlnx-ovs.conf
 sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
-ovs-vsctl --no-wait set Open_vSwitch . other_config:hw-offload=true
 
 systemctl enable NetworkManager.service || true
 systemctl enable NetworkManager-wait-online.service || true
@@ -94,25 +96,6 @@ network:
             renderer: networkd
             dhcp4: false
             mtu: 9000
-    bridges:
-        ovsbr1:
-            mtu: 9000
-            interfaces:
-            - eth1
-            - pf0hpf
-            parameters:
-                forward-delay: "15"
-                stp: false
-            openvswitch: {}
-        ovsbr2:
-            mtu: 9000
-            interfaces:
-            - eth2
-            - pf1hpf
-            parameters:
-                forward-delay: "15"
-                stp: false
-            openvswitch: {}
 EOF
 
 mkdir -p /curtin
