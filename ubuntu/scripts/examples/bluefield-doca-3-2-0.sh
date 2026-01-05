@@ -79,24 +79,5 @@ systemctl disable unattended-upgrades.service || true
 systemctl disable apt-daily-upgrade.timer || true
 systemctl disable ModemManager.service || true
 
-# Static configuration for tmfifo_net0 and OVS bridges (not configurable by MAAS)
-cat > /etc/netplan/60-tmfifo-ovsbr.yaml <<EOF
-network:
-    version: 2
-    ethernets:
-        tmfifo_net0:
-            addresses:
-            - 192.168.100.2/30
-            mtu: 1500
-        pf0hpf:
-            renderer: networkd
-            dhcp4: false
-            mtu: 9000
-        pf1hpf:
-            renderer: networkd
-            dhcp4: false
-            mtu: 9000
-EOF
-
 mkdir -p /curtin
 echo -n "linux-bluefield=$BF_KERNEL_VERSION" > /curtin/CUSTOM_KERNEL
