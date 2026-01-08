@@ -34,15 +34,37 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
     linux-modules-extra-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
     linux-tools-$KVER_DASH-bluefield=$KVER_DASH.$KREVISION \
     linux-tools-bluefield=$BF_KERNEL_VERSION \
-    linux-libc-dev:arm64 \
-    linux-tools-common \
+    bridge-utils \
+    conntrack \
+    dmidecode \
+    ebtables \
+    edac-utils \
+    iptables-persistent \
+    iputils-arping \
+    iputils-ping \
+    iputils-tracepath \
+    irqbalance \
+    jq \
+    curl \
+    kexec-tools \
+    lldpd \
+    lm-sensors \
+    mstflint \
+    net-tools \
+    nftables \
+    tcpdump \
+    vim \
     mlnx-ofed-kernel-modules \
     doca-runtime \
     doca-devel \
+    libxlio \
+    libxlio-dev \
+    libxlio-utils \
+    strongswan \
+    mlnx-fw-updater-signed
 
 apt-mark hold linux-bluefield linux-headers-bluefield linux-image-bluefield \
-    linux-libc-dev linux-tools-common mlnx-ofed-kernel-modules doca-runtime \
-    doca-devel mlnx-fw-updater-signed
+    mlnx-ofed-kernel-modules doca-runtime doca-devel mlnx-fw-updater-signed
 
 rm /etc/apt/sources.list.d/doca.list
 
