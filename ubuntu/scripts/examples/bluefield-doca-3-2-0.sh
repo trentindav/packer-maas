@@ -39,16 +39,12 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
     mlnx-ofed-kernel-modules \
     doca-runtime \
     doca-devel \
-    mlnx-fw-updater-signed
 
-apt-mark hold linux-tools-bluefield linux-image-bluefield linux-bluefield \
-        linux-headers-bluefield linux-image-bluefield linux-libc-dev \
-        linux-tools-common mlnx-ofed-kernel-modules doca-runtime doca-devel
+apt-mark hold linux-bluefield linux-headers-bluefield linux-image-bluefield \
+    linux-libc-dev linux-tools-common mlnx-ofed-kernel-modules doca-runtime \
+    doca-devel mlnx-fw-updater-signed
 
 rm /etc/apt/sources.list.d/doca.list
-
-sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
-
 
 # Remove conflicting and unused configurations from bf-release
 sed -i \
@@ -57,13 +53,10 @@ sed -i \
     /etc/default/grub
 rm /etc/cloud/cloud.cfg.d/91-dib-cloud-init-datasources.cfg
 rm /etc/netplan/60-mlnx.yaml
+# Let MAAS name the OOB interface, note that this will remove the arp_notify=1 set for it
+rm /etc/udev/rules.d/92-oob_net.rules
 
 sed -i -E "s/(_unsigned|_prod|_dev)/_packer_maas/;" /etc/mlnx-release
-
-# Use OVS_DOCA to use Bluefield provided tools to apply the suggested OVS and related configuration
-# OVS bridges creation will be managed by MAAS and cloud-init
-sed -i 's/OVS_DOCA="no"/OVS_DOCA="yes"/' /etc/mellanox/mlnx-ovs.conf
-sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
 
 systemctl enable NetworkManager.service || true
 systemctl enable NetworkManager-wait-online.service || true
@@ -78,6 +71,15 @@ systemctl disable opensmd.service || true
 systemctl disable unattended-upgrades.service || true
 systemctl disable apt-daily-upgrade.timer || true
 systemctl disable ModemManager.service || true
+
+sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
+
+# Use OVS_DOCA to use Bluefield provided tools to apply the suggested OVS and related configuration
+# OVS bridges creation will be managed by MAAS and cloud-init
+sed -i 's/OVS_DOCA="no"/OVS_DOCA="yes"/' /etc/mellanox/mlnx-ovs.conf
+sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
+# hw-offload is not applied when CREATE_OVS_BRIDGES="no", so enforce it here
+ovs-vsctl --no-wait set Open_vSwitch . other_config:hw-offload=true
 
 mkdir -p /curtin
 echo -n "linux-bluefield=$BF_KERNEL_VERSION" > /curtin/CUSTOM_KERNEL
