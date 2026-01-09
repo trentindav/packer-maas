@@ -3,15 +3,14 @@ export DEBIAN_FRONTEND=noninteractive
 
 GPG_KEY="GPG-KEY-Mellanox.pub"
 DPU_ARCH="aarch64"
-DOCA_VERSION="3.2.0"
+DOCA_VERSION="3.2.1"
 TMP_KEYRING="/tmp/mellanox-keyring.gpg"
 MELLANOX_GPG="/etc/apt/keyrings/mellanox.gpg"
 KERNEL="6.8.0"
-KSUBVER="1012"
+KSUBVER="1013"
 KVER_DASH="$KERNEL-$KSUBVER"
-KVER_DOT="$KERNEL.$KSUBVER"
-KREVISION="16"
-BF_KERNEL_VERSION="$KVER_DOT.13"
+KREVISION="17"
+BF_KERNEL_VERSION="$KERNEL.$KSUBVER.14"
 
 mkdir -p /etc/apt/keyrings
 wget https://linux.mellanox.com/public/repo/doca/$DOCA_VERSION/ubuntu24.04/$DPU_ARCH/$GPG_KEY
@@ -67,18 +66,8 @@ apt-mark hold linux-bluefield linux-headers-bluefield linux-image-bluefield \
     mlnx-ofed-kernel-modules doca-runtime doca-devel mlnx-fw-updater-signed
 
 rm /etc/apt/sources.list.d/doca.list
-
-# Remove conflicting and unused configurations from bf-release
-sed -i \
-    -e 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="text debug console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000 fixrtc net.ifnames=0 biosdevname=0 iommu.passthrough=1 earlyprintk=efi,keep"/' \
-    -e 's/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=""/' \
-    /etc/default/grub
-rm /etc/cloud/cloud.cfg.d/91-dib-cloud-init-datasources.cfg
-rm /etc/netplan/60-mlnx.yaml
-# Let MAAS name the OOB interface, note that this will remove the arp_notify=1 set for it
-rm /etc/udev/rules.d/92-oob_net.rules
-
 sed -i -E "s/(_unsigned|_prod|_dev)/_packer_maas/;" /etc/mlnx-release
+sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
 
 systemctl enable NetworkManager.service || true
 systemctl enable NetworkManager-wait-online.service || true
@@ -94,14 +83,21 @@ systemctl disable unattended-upgrades.service || true
 systemctl disable apt-daily-upgrade.timer || true
 systemctl disable ModemManager.service || true
 
-sed -i -e "s/FORCE_MODE=.*/FORCE_MODE=yes/" /etc/infiniband/openib.conf
-
-# Use OVS_DOCA to use Bluefield provided tools to apply the suggested OVS and related configuration
+# Remove conflicting and unused configurations from bf-release
+sed -i \
+    -e 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="text debug console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000 fixrtc net.ifnames=0 biosdevname=0 iommu.passthrough=1 earlyprintk=efi,keep"/' \
+    -e 's/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=""/' \
+    /etc/default/grub
+rm /etc/cloud/cloud.cfg.d/91-dib-cloud-init-datasources.cfg
+# Let MAAS manage netplan and name the OOB interface
+rm /etc/netplan/60-mlnx.yaml
+rm /etc/udev/rules.d/92-oob_net.rules
 # OVS bridges creation will be managed by MAAS and cloud-init
 sed -i 's/OVS_DOCA="no"/OVS_DOCA="yes"/' /etc/mellanox/mlnx-ovs.conf
-sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
 # hw-offload is not applied when CREATE_OVS_BRIDGES="no", so enforce it here
 ovs-vsctl --no-wait set Open_vSwitch . other_config:hw-offload=true
+# Use Bluefield provided tools to enable DOCA for OVS
+sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
 
 mkdir -p /curtin
 echo -n "linux-bluefield=$BF_KERNEL_VERSION" > /curtin/CUSTOM_KERNEL
