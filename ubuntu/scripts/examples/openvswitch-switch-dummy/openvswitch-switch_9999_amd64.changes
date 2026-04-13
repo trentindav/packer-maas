@@ -1,0 +1,26 @@
+Format: 1.8
+Date: Mon, 13 Apr 2026 11:38:11 -0400
+Source: openvswitch-switch
+Binary: openvswitch-switch
+Built-For-Profiles: noudeb
+Architecture: all
+Version: 9999
+Distribution: unstable
+Urgency: low
+Maintainer: Davide Trentin <davide.trentin@canonical.com>
+Changed-By: Davide Trentin <davide.trentin@canonical.com>
+Description:
+ openvswitch-switch - Dummy package to trick cloud-init
+Changes:
+ openvswitch-switch (9999) unstable; urgency=low
+ .
+   * First version
+Checksums-Sha1:
+ e9e53c0078da48335573bb2d4018a9b72c73c616 2012 openvswitch-switch_9999_all.deb
+ cc814561a922bc993c4c7deac2db5a63e5187cfc 6789 openvswitch-switch_9999_amd64.buildinfo
+Checksums-Sha256:
+ f4714e4b8e15bc57df688add835a94669eaeca54ead321ba797854e402a7122a 2012 openvswitch-switch_9999_all.deb
+ 4517b96775d0ba9a977c2bdcbbc94e1068aa8f8487ec607bbb089fc4251c2438 6789 openvswitch-switch_9999_amd64.buildinfo
+Files:
+ 48a0f5dba125e442ef41ad44bad723ff 2012 misc optional openvswitch-switch_9999_all.deb
+ 25c586e39cb0737c2d984b9b7c9c1de1 6789 misc optional openvswitch-switch_9999_amd64.buildinfo

@@ -1,0 +1,10 @@
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+
+Package: openvswitch-switch
+Version: 9999
+Maintainer: Davide Trentin <davide.trentin@canonical.com>
+Architecture: all
+Description: Dummy package to trick cloud-init
+ This is a fake package to trick cloud-init dependency on openvswitch-switch.

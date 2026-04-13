@@ -5,15 +5,15 @@ BASE_URL="https://linux.mellanox.com/public/repo/doca"
 GPG_KEY="GPG-KEY-Mellanox.pub"
 TMP_GPG="/tmp/${GPG_KEY}"
 DPU_ARCH="aarch64"
-DOCA_VERSION="3.2.1"
+DOCA_VERSION="3.2.2"
 TMP_KEYRING="/tmp/mellanox-keyring.gpg"
 MELLANOX_GPG="/etc/apt/keyrings/mellanox.gpg"
 KERNEL="6.8.0"
-KSUBVER="1013"
+KSUBVER="1016"
 KVER_DASH="$KERNEL-$KSUBVER"
-KREVISION="17"
-BF_KERNEL_VERSION="$KERNEL.$KSUBVER.14"
-BSP_VERSION="4.13.1-13827"
+KREVISION="20"
+BF_KERNEL_VERSION="$KERNEL.$KSUBVER.17"
+BSP_VERSION="4.13.2-13900"
 BOOTIMAGE_DEB="/tmp/mlxbf-bootimages-signed_${BSP_VERSION}_arm64.deb"
 
 mkdir -p /etc/apt/keyrings
@@ -70,8 +70,22 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
     strongswan \
     mlnx-fw-updater-signed
 
+# Set versions for OVS conflicts and dependencies to allow installation of
+# a dummy openvswitch-switch package without --force-conflicts.
+apt download doca-openvswitch-common
+apt download doca-openvswitch-switch
+dpkg-deb -R doca-openvswitch-common*.deb /tmp/doca-openvswitch-common
+dpkg-deb -R doca-openvswitch-switch*.deb /tmp/doca-openvswitch-switch
+sed -i 's/^Conflicts: openvswitch-common$/Conflicts: openvswitch-common (<< 2.17~)/' /tmp/doca-openvswitch-common/DEBIAN/control
+sed -i 's/^Conflicts: openvswitch-switch$/Conflicts: openvswitch-switch (<< 2.17~)/' /tmp/doca-openvswitch-switch/DEBIAN/control
+dpkg-deb -b /tmp/doca-openvswitch-common /tmp/doca-openvswitch-common_workaround_all.deb
+dpkg-deb -b /tmp/doca-openvswitch-switch /tmp/doca-openvswitch-switch_workaround_all.deb
+dpkg -i /tmp/doca-openvswitch-common_workaround_all.deb
+dpkg -i /tmp/doca-openvswitch-switch_workaround_all.deb
+
 apt-mark hold linux-bluefield linux-headers-bluefield linux-image-bluefield \
-    mlnx-ofed-kernel-modules doca-runtime doca-devel mlnx-fw-updater-signed
+    mlnx-ofed-kernel-modules doca-runtime doca-devel mlnx-fw-updater-signed \
+    doca-openvswitch-common doca-openvswitch-switch
 
 rm /etc/apt/sources.list.d/doca.list
 sed -i -E "s/(_unsigned|_prod|_dev)/_packer_maas/;" /etc/mlnx-release

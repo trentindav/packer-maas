@@ -1,0 +1,11 @@
+Source: openvswitch-switch
+Section: net
+Priority: optional
+Standards-Version: 3.9.2
+
+Package: openvswitch-switch-equivs-dummy
+Version: 99
+Architecture: all
+Provides: openvswitch-switch
+Description: Dummy package to trick cloud-init
+ This is a fake package to trick cloud-init dependency on openvswitch-switch.
