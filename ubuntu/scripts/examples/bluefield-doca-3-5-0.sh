@@ -107,5 +107,16 @@ systemctl disable unattended-upgrades.service || true
 systemctl disable apt-daily-upgrade.timer || true
 systemctl disable ModemManager.service || true
 
+sed -i \
+    -e 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="text debug console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000 fixrtc net.ifnames=0 biosdevname=0 iommu.passthrough=1 earlyprintk=efi,keep"/' \
+    -e 's/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=""/' \
+    /etc/default/grub
+rm /etc/cloud/cloud.cfg.d/91-dib-cloud-init-datasources.cfg
+rm /etc/netplan/60-mlnx.yaml
+rm /etc/udev/rules.d/92-oob_net.rules
+sed -i 's/CREATE_OVS_BRIDGES="yes"/CREATE_OVS_BRIDGES="no"/' /etc/mellanox/mlnx-ovs.conf
+ovs-vsctl --no-wait set Open_vSwitch . other_config:hw-offload=true
+sed -i 's/OVS_DOCA="no"/OVS_DOCA="yes"/' /etc/mellanox/mlnx-ovs.conf
+
 mkdir -p /curtin
 echo -n "linux-bluefield=$BF_KERNEL_VERSION" > /curtin/CUSTOM_KERNEL
