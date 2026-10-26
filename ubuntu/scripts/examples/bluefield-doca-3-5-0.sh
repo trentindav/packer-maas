@@ -68,14 +68,19 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
 # a dummy openvswitch-switch package without --force-conflicts.
 apt download doca-openvswitch-common
 apt download doca-openvswitch-switch
+apt download python3-doca-openvswitch
 dpkg-deb -R doca-openvswitch-common*.deb /tmp/doca-openvswitch-common
 dpkg-deb -R doca-openvswitch-switch*.deb /tmp/doca-openvswitch-switch
+dpkg-deb -R python3-doca-openvswitch*.deb /tmp/python3-doca-openvswitch
 sed -i 's/^Conflicts: openvswitch-common$/Conflicts: openvswitch-common (<< 2.17~)/' /tmp/doca-openvswitch-common/DEBIAN/control
 sed -i 's/^Conflicts: openvswitch-switch$/Conflicts: openvswitch-switch (<< 2.17~)/' /tmp/doca-openvswitch-switch/DEBIAN/control
+sed -i 's/^Conflicts: python3-openvswitch$/Conflicts: python3-openvswitch (<< 2.17~)/' /tmp/python3-doca-openvswitch/DEBIAN/control
 dpkg-deb -b /tmp/doca-openvswitch-common /tmp/doca-openvswitch-common_workaround_all.deb
 dpkg-deb -b /tmp/doca-openvswitch-switch /tmp/doca-openvswitch-switch_workaround_all.deb
+dpkg-deb -b /tmp/python3-doca-openvswitch /tmp/python3-doca-openvswitch_workaround_all.deb
 dpkg -i /tmp/doca-openvswitch-common_workaround_all.deb
 dpkg -i /tmp/doca-openvswitch-switch_workaround_all.deb
+dpkg -i /tmp/python3-doca-openvswitch_workaround_all.deb
 
 apt-mark hold linux-bluefield linux-headers-bluefield linux-image-bluefield \
     linux-tools-bluefield \
